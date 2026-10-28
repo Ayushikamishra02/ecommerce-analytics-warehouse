@@ -1,0 +1,8 @@
+lateness,sort_key,orders,avg_review_score,bad_review_rate,five_star_rate
+10+ days early,-147,61849,4.3131,0.0915,0.6371
+5-9 days early,-9,20135,4.245,0.0988,0.5987
+0-4 days early,-4,7952,4.1056,0.1177,0.5416
+1-3 days late,1,1870,3.2818,0.3241,0.3305
+4-7 days late,4,1802,2.0866,0.6809,0.1371
+8-14 days late,8,1478,1.6658,0.8038,0.0677
+15+ days late,15,1384,1.7175,0.7854,0.0708

@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: One row per order with typed timestamps.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+      - name: order_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: [delivered, shipped, canceled, unavailable, invoiced, processing, created, approved]
+  - name: stg_customers
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: customer_unique_id
+        tests: [not_null]
+  - name: stg_order_items
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [order_id, order_item_id]
+    columns:
+      - name: item_price
+        tests:
+          - non_negative
+      - name: product_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_products')
+                field: product_id
+  - name: stg_reviews
+    description: One review per order (latest answered).
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: review_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+  - name: stg_products
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+  - name: stg_sellers
+    columns:
+      - name: seller_id
+        tests: [unique, not_null]
+  - name: stg_geolocation
+    columns:
+      - name: zip_prefix
+        tests: [unique, not_null]

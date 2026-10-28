@@ -1,0 +1,124 @@
+// =====================================================================================================
+// DAX measures for the Olist dashboard.  Create a table called _Measures (Home -> Enter data -> OK),
+// then New measure -> paste one block at a time.  Every definition mirrors a dbt model, so the numbers
+// in Power BI must match the warehouse (expected values with NO filters are in the comments: use them
+// to check your model before you build visuals).
+// =====================================================================================================
+
+// ---------- Sales ------------------------------------------------------------------------------------
+
+Valid Orders =
+CALCULATE ( COUNTROWS ( fct_orders ), fct_orders[is_valid_sale] = TRUE () )
+// expected: 98,207   (excludes canceled + unavailable)
+
+GMV =
+CALCULATE ( SUM ( fct_orders[order_value] ), fct_orders[is_valid_sale] = TRUE () )
+// expected: R$ 15,735,527   (items + freight; incomplete months included)
+
+AOV =
+DIVIDE ( [GMV], [Valid Orders] )
+// expected: R$ 160.23
+
+Item Revenue =
+CALCULATE ( SUM ( fct_order_items[item_price] ), fct_order_items[is_valid_sale] = TRUE () )
+// expected: R$ 13,494,401   (no freight)
+
+Freight Share =
+DIVIDE (
+    CALCULATE ( SUM ( fct_orders[freight_value] ), fct_orders[is_valid_sale] = TRUE () ),
+    [GMV]
+)
+// expected: 14.2%
+
+Customers =
+CALCULATE ( DISTINCTCOUNT ( fct_orders[customer_key] ), fct_orders[is_valid_sale] = TRUE () )
+// expected: 94,990
+
+// ---------- Time intelligence (needs dim_date marked as a date table) -------------------------------
+
+GMV PY =
+CALCULATE ( [GMV], SAMEPERIODLASTYEAR ( dim_date[date] ) )
+
+GMV YoY % =
+VAR cur = [GMV]
+VAR prev = [GMV PY]
+RETURN IF ( NOT ISBLANK ( prev ), DIVIDE ( cur - prev, prev ) )
+// Jan-Aug 2018 vs Jan-Aug 2017: +140%
+
+GMV MTD =
+TOTALMTD ( [GMV], dim_date[date] )
+
+GMV 3M Rolling Avg =
+DIVIDE (
+    CALCULATE ( [GMV], DATESINPERIOD ( dim_date[date], MAX ( dim_date[date] ), -3, MONTH ) ),
+    3
+)
+// GMV of the last 3 months / 3: put it on a monthly line chart next to [GMV]
+
+// ---------- Delivery -----------------------------------------------------------------------------------
+
+Delivered Orders =
+CALCULATE ( COUNTROWS ( fct_orders ), fct_orders[is_delivered] = TRUE () )
+// expected: 96,470
+
+Late Rate =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fct_orders ), fct_orders[is_delivered] = TRUE (), fct_orders[is_late] = TRUE () ),
+    [Delivered Orders]
+)
+// expected: 6.8%
+
+Avg Delivery Days =
+CALCULATE ( AVERAGE ( fct_orders[delivery_days] ), fct_orders[is_delivered] = TRUE () )
+// expected: 12.6
+
+Avg Days Late (late orders) =
+CALCULATE (
+    AVERAGE ( fct_orders[days_late] ),
+    fct_orders[is_delivered] = TRUE (),
+    fct_orders[is_late] = TRUE ()
+)
+
+// ---------- Customer experience ------------------------------------------------------------------------
+
+Avg Review Score =
+AVERAGE ( fct_orders[review_score] )
+// expected: 4.07
+
+Bad Review Rate =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fct_orders ), fct_orders[is_bad_review] = TRUE (), fct_orders[is_delivered] = TRUE () ),
+    [Delivered Orders]
+)
+// expected: 13.2%   (1-2 stars, delivered orders)
+
+Bad Review Rate | Late =
+CALCULATE ( [Bad Review Rate], fct_orders[is_late] = TRUE () )
+// expected: 62.9%
+
+Bad Review Rate | On Time =
+CALCULATE ( [Bad Review Rate], fct_orders[is_late] = FALSE () )
+// expected: 9.5%
+
+// ---------- Retention ----------------------------------------------------------------------------------
+
+Repeat Customer Rate =
+VAR repeaters =
+    COUNTROWS ( FILTER ( dim_customers, dim_customers[valid_orders] >= 2 ) )
+VAR buyers =
+    COUNTROWS ( FILTER ( dim_customers, dim_customers[valid_orders] >= 1 ) )
+RETURN DIVIDE ( repeaters, buyers )
+// expected: 3.0%
+
+Cohort Retention % =
+DIVIDE ( SUM ( mart_cohort_retention[active_customers] ), SUM ( mart_cohort_retention[cohort_size] ) )
+// use in a matrix: rows = cohort_month, columns = months_since
+
+// ---------- Sellers ------------------------------------------------------------------------------------
+
+Active Sellers =
+CALCULATE ( DISTINCTCOUNT ( fct_order_items[seller_id] ), fct_order_items[is_valid_sale] = TRUE () )
+// expected: 3,053
+
+Seller GMV Share =
+DIVIDE ( [Item Revenue], CALCULATE ( [Item Revenue], ALL ( dim_sellers ) ) )

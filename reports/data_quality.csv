@@ -1,0 +1,12 @@
+issue,count,how it's handled
+Repeated review_id rows,827,stg_reviews keeps one review per order (latest answered)
+Orders with more than one review,555,as above
+Products with no category,610,category = 'unknown'
+Categories with no English translation,2,Portuguese name kept
+Orders with no items,775,order_value = 0; mostly canceled/unavailable
+Orders with no payment record,1,kept; payment fields null
+'Delivered' orders with no delivery date,8,is_delivered = false
+Valid orders whose payments differ from items + freight by > 1 BRL,255,"tracked by a dbt warning test (installment interest, vouchers)"
+Customer IDs vs real people,3345,customer_unique_id used as customer_key
+"Geolocation rows (many per zip, some outside Brazil)",1000163,one median point per zip inside Brazil's bounding box
+Months with < 100 orders (start/end of data),3,is_complete_month = false

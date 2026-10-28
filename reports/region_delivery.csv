@@ -1,0 +1,6 @@
+region,delivered_orders,avg_delivery_days,late_rate,freight_share,avg_review_score
+Southeast,66193.0,10.7519,0.0612,0.1311,4.1655
+South,13813.0,14.0323,0.059,0.1503,4.181
+Center-West,5624.0,15.0177,0.0653,0.1493,4.1181
+Northeast,9044.0,20.005,0.1272,0.178,3.9542
+North,1796.0,22.5923,0.0857,0.1852,4.0178

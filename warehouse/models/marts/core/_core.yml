@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      One row per order. customer_key = customer_unique_id (the person). is_valid_sale excludes canceled and
+      unavailable orders. Money in BRL. is_late compares delivery date with the promised date.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_key
+        tests:
+          - not_null
+          - relationships: {arguments: {to: ref('dim_customers'), field: customer_key}}
+      - name: order_value
+        tests: [non_negative]
+      - name: review_score
+        tests:
+          - accepted_values: {arguments: {values: [1, 2, 3, 4, 5], quote: false}}
+      - name: customer_region
+        tests: [not_null]
+  - name: fct_order_items
+    tests:
+      - unique_combination: {arguments: {columns: [order_id, order_item_id]}}
+    columns:
+      - name: seller_id
+        tests:
+          - relationships: {arguments: {to: ref('dim_sellers'), field: seller_id}}
+      - name: product_id
+        tests:
+          - relationships: {arguments: {to: ref('dim_products'), field: product_id}}
+  - name: dim_customers
+    description: One row per person (customer_unique_id).
+    columns:
+      - name: customer_key
+        tests: [unique, not_null]
+  - name: dim_products
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+  - name: dim_sellers
+    columns:
+      - name: seller_id
+        tests: [unique, not_null]
+  - name: dim_date
+    columns:
+      - name: date
+        tests: [unique, not_null]

@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: mart_monthly_kpis
+    description: Monthly KPIs. Use is_complete_month to exclude the sparse first and last months from trends.
+    columns:
+      - name: month
+        tests: [unique, not_null]
+      - name: late_rate
+        tests:
+          - between: {arguments: {min_value: 0, max_value: 1}}
+  - name: mart_cohort_retention
+    tests:
+      - unique_combination: {arguments: {columns: [cohort_month, months_since]}}
+    columns:
+      - name: retention_rate
+        tests:
+          - between: {arguments: {min_value: 0, max_value: 1}}
+  - name: mart_rfm
+    columns:
+      - name: customer_key
+        tests: [unique, not_null]
+      - name: segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["Champions", "Loyal, lapsing", "New big spenders", "New customers", "Cooling",
+                         "At risk, high value", "Hibernating"]
+  - name: mart_seller_performance
+    columns:
+      - name: seller_id
+        tests: [unique, not_null]
+  - name: mart_category_performance
+    columns:
+      - name: category
+        tests: [unique, not_null]
+  - name: mart_state_delivery
+    columns:
+      - name: state
+        tests: [unique, not_null]
+  - name: mart_delivery_vs_review
+  - name: mart_order_lifecycle
